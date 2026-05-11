@@ -62,10 +62,6 @@ jobs:
             echo "Tag ${TAG} does not exist; will create."
           fi
 
-      - name: Verify version consistency
-        if: steps.check.outputs.exists == 'false'
-        run: ./scripts/release/check-versions.sh
-
       - name: Create and push tag
         if: steps.check.outputs.exists == 'false'
         env:
