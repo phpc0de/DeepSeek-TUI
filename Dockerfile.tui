@@ -1,0 +1,12 @@
+﻿FROM debian:bookworm-slim
+
+ARG TUI_BINARY=dist/deepseek-tui-linux-x64
+
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends ca-certificates \
+    && rm -rf /var/lib/apt/lists/*
+
+COPY ${TUI_BINARY} /usr/local/bin/deepseek-tui
+RUN chmod +x /usr/local/bin/deepseek-tui
+
+ENTRYPOINT ["/usr/local/bin/deepseek-tui"]
