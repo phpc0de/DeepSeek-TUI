@@ -5,6 +5,21 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.8.31] - 2026-05-11
+
+Release pipeline alignment update for the fork: Linux x64-only release assets,
+nightly matrix reduction, and workflow/version synchronization fixes so tag
+builds can publish `deepseek-linux-x64` and `deepseek-tui-linux-x64`.
+
+### Changed
+
+- Release and nightly build matrices now target Linux x64 only for both
+  binaries (`deepseek` and `deepseek-tui`).
+- Release workflow no longer requires Docker image publishing as a precondition
+  for creating a GitHub Release.
+- Auto-tag and release gating were adjusted to avoid lockfile/version-gate
+  deadlocks in this fork's CI path.
+
 ## [0.8.28] - 2026-05-10
 
 A maintenance release bundling four streaming / approvals / cache
