@@ -18,6 +18,8 @@ permissions:
 jobs:
   build-release:
     runs-on: ubuntu-latest
+    env:
+      GHCR_TOKEN: ${{ secrets.GHCR_TOKEN }}
 
     steps:
       - name: Checkout
@@ -80,15 +82,15 @@ jobs:
             dist/deepseek-tui-linux-x64
 
       - name: Log in to GHCR (PAT)
-        if: ${{ secrets.GHCR_TOKEN != '' }}
+        if: ${{ env.GHCR_TOKEN != '' }}
         uses: docker/login-action@v3
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
-          password: ${{ secrets.GHCR_TOKEN }}
+          password: ${{ env.GHCR_TOKEN }}
 
       - name: Log in to GHCR (GITHUB_TOKEN fallback)
-        if: ${{ secrets.GHCR_TOKEN == '' }}
+        if: ${{ env.GHCR_TOKEN == '' }}
         uses: docker/login-action@v3
         with:
           registry: ghcr.io
