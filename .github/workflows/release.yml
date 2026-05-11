@@ -39,17 +39,17 @@ jobs:
       - name: Format check
         run: cargo fmt --all -- --check
       - name: Compile check
-        run: cargo check --workspace --all-targets --locked
+        run: cargo check --workspace --all-targets
       - name: Clippy
-        run: cargo clippy --workspace --all-targets --all-features --locked -- -D warnings
+        run: cargo clippy --workspace --all-targets --all-features -- -D warnings
       - name: Workspace tests
-        run: cargo test --workspace --all-features --locked
+        run: cargo test --workspace --all-features
       - name: TUI snapshot parity
-        run: cargo test -p deepseek-tui-core --test snapshot --locked
+        run: cargo test -p deepseek-tui-core --test snapshot
       - name: Protocol schema parity
-        run: cargo test -p deepseek-protocol --test parity_protocol --locked
+        run: cargo test -p deepseek-protocol --test parity_protocol
       - name: State persistence parity
-        run: cargo test -p deepseek-state --test parity_state --locked
+        run: cargo test -p deepseek-state --test parity_state
       - name: Lockfile drift guard
         run: git diff --exit-code -- Cargo.lock
 
