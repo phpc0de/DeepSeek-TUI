@@ -1,4 +1,4 @@
-﻿name: release-linux-x64
+name: release-linux-windows-x64
 
 on:
   push:
@@ -17,7 +17,20 @@ permissions:
 
 jobs:
   build-release:
-    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+            target: x86_64-unknown-linux-gnu
+            deepseek_name: deepseek-linux-x64
+            tui_name: deepseek-tui-linux-x64
+          - os: windows-latest
+            target: x86_64-pc-windows-msvc
+            deepseek_name: deepseek-win-x64.exe
+            tui_name: deepseek-tui-win-x64.exe
+
+    runs-on: ${{ matrix.os }}
     env:
       GHCR_TOKEN: ${{ secrets.GHCR_TOKEN }}
 
@@ -47,31 +60,42 @@ jobs:
         uses: dtolnay/rust-toolchain@stable
 
       - name: Install Linux build dependencies
+        if: ${{ matrix.os == 'ubuntu-latest' }}
         run: |
           sudo apt-get update
           sudo apt-get install -y --no-install-recommends pkg-config libdbus-1-dev
 
-      - name: Build deepseek linux x64
-        run: cargo build --release --bin deepseek --target x86_64-unknown-linux-gnu
+      - name: Build deepseek x64
+        run: cargo build --release --bin deepseek --target ${{ matrix.target }}
 
-      - name: Build deepseek-tui linux x64
-        run: cargo build --release -p deepseek-tui --bin deepseek-tui --target x86_64-unknown-linux-gnu
+      - name: Build deepseek-tui x64
+        run: cargo build --release -p deepseek-tui --bin deepseek-tui --target ${{ matrix.target }}
 
-      - name: Prepare artifacts
+      - name: Prepare Linux artifacts
+        if: ${{ matrix.os == 'ubuntu-latest' }}
         shell: bash
         run: |
           mkdir -p dist
-          cp target/x86_64-unknown-linux-gnu/release/deepseek dist/deepseek-linux-x64
-          cp target/x86_64-unknown-linux-gnu/release/deepseek-tui dist/deepseek-tui-linux-x64
-          chmod +x dist/deepseek-linux-x64 dist/deepseek-tui-linux-x64
+          cp target/${{ matrix.target }}/release/deepseek dist/${{ matrix.deepseek_name }}
+          cp target/${{ matrix.target }}/release/deepseek-tui dist/${{ matrix.tui_name }}
+          chmod +x dist/${{ matrix.deepseek_name }} dist/${{ matrix.tui_name }}
+
+      - name: Prepare Windows artifacts
+        if: ${{ matrix.os == 'windows-latest' }}
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Path dist -Force | Out-Null
+          Copy-Item "target/${{ matrix.target }}/release/deepseek.exe" "dist/${{ matrix.deepseek_name }}"
+          Copy-Item "target/${{ matrix.target }}/release/deepseek-tui.exe" "dist/${{ matrix.tui_name }}"
 
       - name: Upload workflow artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: linux-x64-binaries
+          name: ${{ matrix.os }}-x64-binaries
           path: dist/*
 
       - name: Create GitHub Release
+        if: ${{ matrix.os == 'ubuntu-latest' }}
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ steps.meta.outputs.version }}
@@ -81,8 +105,17 @@ jobs:
             dist/deepseek-linux-x64
             dist/deepseek-tui-linux-x64
 
+      - name: Upload Windows release assets
+        if: ${{ matrix.os == 'windows-latest' }}
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.meta.outputs.version }}
+          files: |
+            dist/deepseek-win-x64.exe
+            dist/deepseek-tui-win-x64.exe
+
       - name: Log in to GHCR (PAT)
-        if: ${{ env.GHCR_TOKEN != '' }}
+        if: ${{ matrix.os == 'ubuntu-latest' && env.GHCR_TOKEN != '' }}
         uses: docker/login-action@v3
         with:
           registry: ghcr.io
@@ -90,7 +123,7 @@ jobs:
           password: ${{ env.GHCR_TOKEN }}
 
       - name: Log in to GHCR (GITHUB_TOKEN fallback)
-        if: ${{ env.GHCR_TOKEN == '' }}
+        if: ${{ matrix.os == 'ubuntu-latest' && env.GHCR_TOKEN == '' }}
         uses: docker/login-action@v3
         with:
           registry: ghcr.io
@@ -98,6 +131,7 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Extract Docker metadata
+        if: ${{ matrix.os == 'ubuntu-latest' }}
         id: docker_meta
         uses: docker/metadata-action@v5
         with:
@@ -107,6 +141,7 @@ jobs:
             type=raw,value=latest
 
       - name: Build and push Docker image
+        if: ${{ matrix.os == 'ubuntu-latest' }}
         uses: docker/build-push-action@v6
         with:
           context: .
