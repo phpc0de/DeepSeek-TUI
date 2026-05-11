@@ -128,7 +128,7 @@ jobs:
         shell: bash
         env:
           DEEPSEEK_BUILD_SHA: ${{ needs.resolve.outputs.sha }}
-        run: cargo build --release --locked --target ${{ matrix.target }}
+        run: cargo build --release --target ${{ matrix.target }}
       - name: Rename binary
         shell: bash
         run: |
